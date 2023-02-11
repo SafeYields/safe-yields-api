@@ -14,9 +14,10 @@ export class AppController {
   healthCheck(): string {
     return this.appService.healthCheck();
   }
+
   @UseInterceptors(CacheInterceptor)
   @Get('/safe-price')
-  getPrice(): string {
-    return this.appService.getSafePrice();
+  async getPrice() {
+    return await this.appService.getSafePrice();
   }
 }

@@ -13,7 +13,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       inject: [ConfigService],
       useFactory: async (config: ConfigService) => {
         return {
-          token: config.get('CHAIN_NAME'),
           custom: config.get('CHAIN_URL'),
           useDefaultProvider: false,
         };
