@@ -1,12 +1,22 @@
-import { Controller, Get } from '@nestjs/common';
+import {
+  CacheInterceptor,
+  Controller,
+  Get,
+  UseInterceptors,
+} from '@nestjs/common';
 import { AppService } from './app.service';
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @Get('/')
+  healthCheck(): string {
+    return this.appService.healthCheck();
+  }
+  @UseInterceptors(CacheInterceptor)
+  @Get('/safe-price')
+  getPrice(): string {
+    return this.appService.getSafePrice();
   }
 }
