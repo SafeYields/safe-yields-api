@@ -1,8 +1,9 @@
-import { CacheModule, Module } from '@nestjs/common';
+import { CacheModule, MiddlewareConsumer, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { EthersModule } from 'nestjs-ethers';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { LoggerMiddleware } from './utils/logger.middleware';
 
 @Module({
   imports: [
@@ -22,4 +23,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  }
+}

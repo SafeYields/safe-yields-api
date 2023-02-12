@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   EthersContract,
   InjectContractProvider,
@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AppService {
+  private readonly logger = new Logger(AppService.name);
   private safeTokenContract: Contract;
   private nftContract: Contract;
 
@@ -42,11 +43,16 @@ export class AppService {
     );
   }
 
+  start(): void {
+    Logger.log(`${AppService.name} has started.`, AppService.name);
+  }
+
   healthCheck(): string {
     return 'healthy';
   }
 
   getSafePrice(): string {
+    this.logger.debug('requesting price from the contract');
     return this.safeTokenContract.price();
   }
 }

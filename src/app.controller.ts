@@ -17,7 +17,7 @@ export class AppController {
 
   @UseInterceptors(CacheInterceptor)
   @Get('/safe-price')
-  async getPrice() {
-    return await this.appService.getSafePrice();
+  getPrice() {
+    return this.appService.getSafePrice();
   }
 }
