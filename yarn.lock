@@ -837,6 +837,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ethersproject/units@npm:^5.7.0":
+  version: 5.7.0
+  resolution: "@ethersproject/units@npm:5.7.0"
+  dependencies:
+    "@ethersproject/bignumber": ^5.7.0
+    "@ethersproject/constants": ^5.7.0
+    "@ethersproject/logger": ^5.7.0
+  checksum: 304714f848cd32e57df31bf545f7ad35c2a72adae957198b28cbc62166daa929322a07bff6e9c9ac4577ab6aa0de0546b065ed1b2d20b19e25748b7d475cb0fc
+  languageName: node
+  linkType: hard
+
 "@ethersproject/wallet@npm:^5.7.0":
   version: 5.7.0
   resolution: "@ethersproject/wallet@npm:5.7.0"
@@ -6453,6 +6464,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "safe-yields-api@workspace:."
   dependencies:
+    "@ethersproject/units": ^5.7.0
     "@nestjs/cli": ^9.2.0
     "@nestjs/common": ^9.3.8
     "@nestjs/config": ^2.3.1
