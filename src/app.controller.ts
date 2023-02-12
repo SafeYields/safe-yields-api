@@ -17,46 +17,49 @@ export class AppController {
 
   @UseInterceptors(CacheInterceptor)
   @Get('/safe/price')
-  getPrice() {
+  getPrice(): Promise<string> {
     return this.appService.getSafePrice();
   }
 
   @UseInterceptors(CacheInterceptor)
   @Get('/safe/balance')
-  getSafeBalance(account: string) {
+  getSafeBalance(account: string): Promise<string> {
     return this.appService.getSafeBalance(account);
   }
+
   @UseInterceptors(CacheInterceptor)
   @Get('/safe/apr')
-  getSafeApr() {
-    return 37;
+  getSafeApr(): string {
+    return '37.3';
   }
 
   @UseInterceptors(CacheInterceptor)
   @Get('/nft/price')
-  getNftPrice() {
+  getNftPrice(): Promise<[string, string, string, string]> {
     return this.appService.getNftPrice();
   }
+
   @UseInterceptors(CacheInterceptor)
   @Get('/nft/fairPrice')
-  getNftFairPrice() {
+  getNftFairPrice(): Promise<[string, string, string, string]> {
     return this.appService.getNftFairPrice();
   }
+
   @UseInterceptors(CacheInterceptor)
   @Get('/nft/apr')
-  getNftApr() {
-    return 26;
+  getNftApr(): string {
+    return '26.7';
   }
 
   @UseInterceptors(CacheInterceptor)
   @Get('/nft/balance')
-  getNftBalance(account: string) {
+  getNftBalance(account: string): Promise<string> {
     return this.appService.getNftBalance(account);
   }
 
   @UseInterceptors(CacheInterceptor)
   @Get('/usdc/balance')
-  getUsdcBalance(account: string) {
+  getUsdcBalance(account: string): Promise<string> {
     return this.appService.getUsdcBalance(account);
   }
 }
