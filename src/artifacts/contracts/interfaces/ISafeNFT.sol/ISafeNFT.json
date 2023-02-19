@@ -276,6 +276,19 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "getCurrentPresaleWeek",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "enum ISafeNFT.Tiers",
@@ -544,6 +557,32 @@
     {
       "inputs": [
         {
+          "internalType": "uint256[][]",
+          "name": "_presalePrice",
+          "type": "uint256[][]"
+        }
+      ],
+      "name": "setDiscountedPriceTable",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "launchDate",
+          "type": "uint256"
+        }
+      ],
+      "name": "setPresaleStartDate",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "bytes4",
           "name": "interfaceId",
           "type": "bytes4"
@@ -558,6 +597,13 @@
         }
       ],
       "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "togglePresale",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     }
   ],

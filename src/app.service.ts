@@ -68,10 +68,19 @@ export class AppService {
       formatAmountFromResponseToString(value, 6),
     );
   }
+
   async getNftFairPrice() {
     return (await this.safeNFTContract.getFairPriceTable()).map((value) =>
       formatAmountFromResponseToString(value, 6),
     );
+  }
+
+  async getPresaleLaunchDate() {
+    return await this.safeNFTContract.presaleStartDate();
+  }
+
+  async getCurrentPresaleWeek() {
+    return await this.safeNFTContract.getCurrentPresaleWeek();
   }
 
   async getNftBalance(address: string) {

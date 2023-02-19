@@ -40,9 +40,15 @@ export class AppController {
   }
 
   @UseInterceptors(CacheInterceptor)
-  @Get('/nft/fairPrice')
-  getNftFairPrice(): Promise<[string, string, string, string]> {
-    return this.appService.getNftFairPrice();
+  @Get('/nft/presale')
+  getPresaleLaunchDate(): Promise<string> {
+    return this.appService.getPresaleLaunchDate();
+  }
+
+  @UseInterceptors(CacheInterceptor)
+  @Get('/nft/week')
+  getCurrentPresaleWeel(): Promise<number> {
+    return this.appService.getCurrentPresaleWeek();
   }
 
   @UseInterceptors(CacheInterceptor)
