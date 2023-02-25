@@ -68,6 +68,12 @@ export class AppService {
       formatAmountFromResponseToString(value, 6),
     );
   }
+  async getNftPresalePrice() {
+    this.logger.debug('requesting the blockchain');
+    return (await this.safeNFTContract.getDiscountedPriceTable()).map((value) =>
+      formatAmountFromResponseToString(value, 6),
+    );
+  }
 
   async getNftFairPrice() {
     return (await this.safeNFTContract.getFairPriceTable()).map((value) =>
