@@ -75,6 +75,13 @@ export class AppService {
     );
   }
 
+  async getPresaleNFTAvailable() {
+    this.logger.debug('requesting the blockchain');
+    return (await this.safeNFTContract.getPresaleNFTAvailable()).map((value) =>
+      formatAmountFromResponseToString(value, 0),
+    );
+  }
+
   async getNftFairPrice() {
     return (await this.safeNFTContract.getFairPriceTable()).map((value) =>
       formatAmountFromResponseToString(value, 6),
