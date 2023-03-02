@@ -7,7 +7,7 @@ import { LoggerMiddleware } from './utils/logger.middleware';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     CacheModule.register(),
     EthersModule.forRootAsync({
       imports: [ConfigModule],
