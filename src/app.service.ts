@@ -68,6 +68,7 @@ export class AppService {
       formatAmountFromResponseToString(value, 6),
     );
   }
+
   async getNftPresalePrice() {
     this.logger.debug('requesting the blockchain');
     return (await this.safeNFTContract.getDiscountedPriceTable()).map((value) =>
@@ -89,11 +90,11 @@ export class AppService {
   }
 
   async getPresaleLaunchDate() {
-    return await this.safeNFTContract.presaleStartDate();
+    return (await this.safeNFTContract.presaleStartDate()).toNumber();
   }
 
   async getCurrentPresaleWeek() {
-    return await this.safeNFTContract.getCurrentPresaleWeek();
+    return (await this.safeNFTContract.getCurrentPresaleWeek()).toNumber();
   }
 
   async getNftBalance(address: string) {
