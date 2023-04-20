@@ -80,8 +80,8 @@ export class AppService {
       estimateSwapDto.tokenIn === this.usdcContract.address &&
       estimateSwapDto.tokenOut === this.safeTokenContract.address
         ? 'buySafeForExactAmountOfUSD'
-        : estimateSwapDto.tokenOut === this.safeTokenContract.address &&
-          estimateSwapDto.tokenIn === this.usdcContract.address
+        : estimateSwapDto.tokenIn === this.safeTokenContract.address &&
+          estimateSwapDto.tokenOut === this.usdcContract.address
         ? 'sellExactAmountOfSafe'
         : 'unsupported';
 
@@ -99,11 +99,10 @@ export class AppService {
         const safeTokensToSell = formatAmountFromResponse(
           estimateSwapDto.amountIn,
         );
-        const usdPriceOfTokensToSell =
-          (safeTokensToSell * this.safePrice) / 1e6;
+        const usdPriceOfTokensToSell = safeTokensToSell * this.safePrice;
         const usdTaxSell = usdPriceOfTokensToSell * this.sellTax;
         const usdToReturn = usdPriceOfTokensToSell - usdTaxSell;
-        amountOut = usdToReturn;
+        amountOut = usdToReturn * 1e6;
         break;
       default:
         throw new HttpException('unsupported token', 400);
