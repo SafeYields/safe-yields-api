@@ -1,10 +1,14 @@
 import {
+  Body,
   CacheInterceptor,
   Controller,
   Get,
+  Query,
   UseInterceptors,
 } from '@nestjs/common';
 import { AppService } from './app.service';
+import { EstimateSwapDto } from './estimate-swap.dto';
+import fetch, { Response } from 'node-fetch';
 
 @Controller()
 export class AppController {
@@ -13,6 +17,13 @@ export class AppController {
   @Get('/')
   healthCheck(): string {
     return this.appService.healthCheck();
+  }
+
+  @Get('/swap/estimate')
+  async estimateSwap(
+    @Query() estimateSwapDto: EstimateSwapDto,
+  ): Promise<unknown> {
+    return this.appService.estimateSwap(estimateSwapDto);
   }
 
   @UseInterceptors(CacheInterceptor)
@@ -59,7 +70,7 @@ export class AppController {
 
   @UseInterceptors(CacheInterceptor)
   @Get('/nft/week')
-  getCurrentPresaleWeel(): Promise<number> {
+  getCurrentPresaleWeek(): Promise<number> {
     return this.appService.getCurrentPresaleWeek();
   }
 

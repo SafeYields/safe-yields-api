@@ -4,13 +4,14 @@ import { AppService } from './app.service';
 import { EthersModule } from 'nestjs-ethers';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerMiddleware } from './utils/logger.middleware';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     CacheModule.register(),
     EthersModule.forRootAsync({
-      imports: [ConfigModule],
+      imports: [ConfigModule, ScheduleModule.forRoot()],
       inject: [ConfigService],
       useFactory: async (config: ConfigService) => {
         return {

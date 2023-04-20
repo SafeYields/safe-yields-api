@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpException, Injectable, Logger } from '@nestjs/common';
 import {
   EthersContract,
   InjectContractProvider,
@@ -10,7 +10,13 @@ import { ConfigService } from '@nestjs/config';
 import * as SAFE_TOKEN_ABI from './artifacts/contracts/SafeToken.sol/SafeToken.json';
 import * as SAFE_NFT_ABI from './artifacts/contracts/SafeNFT.sol/SafeNFT.json';
 import * as USDC_ABI from './artifacts/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json';
-import { formatAmountFromResponseToString } from './utils/formatAmountFromResponseToString';
+import {
+  formatAmountFromResponse,
+  formatAmountFromResponseToString,
+  formatAmountToString,
+} from './utils/formatAmountFromResponseToString';
+import { EstimateSwapDto } from './estimate-swap.dto';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class AppService {
@@ -18,6 +24,9 @@ export class AppService {
   private safeTokenContract: Contract;
   private safeNFTContract: Contract;
   private usdcContract: Contract;
+
+  private safePrice: number;
+  private buyTax = 0.0025;
 
   constructor(
     private readonly configService: ConfigService,
@@ -48,11 +57,70 @@ export class AppService {
     return 'healthy';
   }
 
+  async estimateSwap(estimateSwapDto: EstimateSwapDto) {
+    // const search = Object.keys(estimateSwapDto).reduce(
+    //   (searchString, key) =>
+    //     estimateSwapDto[key] !== undefined
+    //       ? `${searchString}&${key}=${estimateSwapDto[key]}`
+    //       : searchString,
+    //   '',
+    // );
+    // const res = await fetch(
+    //   `https://aggregator-api.kyberswap.com/arbitrum/route/encode?${search.slice(
+    //     1,
+    //   )}`,
+    //   {
+    //     headers: {
+    //       'accept-version': 'Latest',
+    //     },
+    //   },
+    // );
+    const operation =
+      estimateSwapDto.tokenIn === this.usdcContract.address &&
+      estimateSwapDto.tokenOut === this.safeTokenContract.address
+        ? 'buySafeForExactAmountOfUSD'
+        : estimateSwapDto.tokenOut === this.safeTokenContract.address &&
+          estimateSwapDto.tokenIn === this.safeTokenContract.address
+        ? 'sellExactAmountOfSafe'
+        : 'unsupported';
+
+    let amountOut = 0;
+    switch (operation) {
+      case 'buySafeForExactAmountOfUSD':
+        const usdToSpend = formatAmountFromResponse(estimateSwapDto.amountIn);
+        const usdTax = usdToSpend * this.buyTax;
+        const usdToSwapForSafe = usdToSpend - usdTax;
+        const safeTokensToBuy = (usdToSwapForSafe * 1e6) / this.safePrice;
+        amountOut = safeTokensToBuy;
+        break;
+      case 'sellExactAmountOfSafe':
+      default:
+        throw new HttpException('unsupported token', 400);
+    }
+
+    return {
+      amountInUsd: 0,
+      amountOutUsd: 0,
+      encodedSwapData: '',
+      gasUsd: 0,
+      inputAmount: estimateSwapDto.tokenIn.toString(),
+      outputAmount: Math.round(amountOut).toString(),
+      routerAddress: '',
+    };
+  }
+
+  @Cron('*/5 * * * * *') // This cron expression runs every 5 seconds
+  async handleCron() {
+    await this.getSafePrice();
+  }
+
   async getSafePrice() {
     this.logger.debug('requesting price from the safe contract');
-    return formatAmountFromResponseToString(
+    this.safePrice = formatAmountFromResponse(
       await this.safeTokenContract.price(),
     );
+    this.logger.debug(`price ${this.safePrice}`);
+    return formatAmountToString(this.safePrice);
   }
 
   async getSafeBalance(address: string) {
