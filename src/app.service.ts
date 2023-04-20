@@ -27,6 +27,7 @@ export class AppService {
 
   private safePrice: number;
   private buyTax = 0.0025;
+  private sellTax = 0.0025;
 
   constructor(
     private readonly configService: ConfigService,
@@ -80,20 +81,30 @@ export class AppService {
       estimateSwapDto.tokenOut === this.safeTokenContract.address
         ? 'buySafeForExactAmountOfUSD'
         : estimateSwapDto.tokenOut === this.safeTokenContract.address &&
-          estimateSwapDto.tokenIn === this.safeTokenContract.address
+          estimateSwapDto.tokenIn === this.usdcContract.address
         ? 'sellExactAmountOfSafe'
         : 'unsupported';
 
     let amountOut = 0;
+    this.logger.debug(`${operation}`);
     switch (operation) {
       case 'buySafeForExactAmountOfUSD':
         const usdToSpend = formatAmountFromResponse(estimateSwapDto.amountIn);
-        const usdTax = usdToSpend * this.buyTax;
-        const usdToSwapForSafe = usdToSpend - usdTax;
+        const usdTaxBuy = usdToSpend * this.buyTax;
+        const usdToSwapForSafe = usdToSpend - usdTaxBuy;
         const safeTokensToBuy = (usdToSwapForSafe * 1e6) / this.safePrice;
         amountOut = safeTokensToBuy;
         break;
       case 'sellExactAmountOfSafe':
+        const safeTokensToSell = formatAmountFromResponse(
+          estimateSwapDto.amountIn,
+        );
+        const usdPriceOfTokensToSell =
+          (safeTokensToSell * this.safePrice) / 1e6;
+        const usdTaxSell = usdPriceOfTokensToSell * this.sellTax;
+        const usdToReturn = usdPriceOfTokensToSell - usdTaxSell;
+        amountOut = usdToReturn;
+        break;
       default:
         throw new HttpException('unsupported token', 400);
     }
@@ -116,9 +127,10 @@ export class AppService {
 
   async getSafePrice() {
     this.logger.debug('requesting price from the safe contract');
-    this.safePrice = formatAmountFromResponse(
+    const price = formatAmountFromResponse(
       await this.safeTokenContract.price(),
     );
+    if (!isNaN(Number(price))) this.safePrice = price;
     this.logger.debug(`price ${this.safePrice}`);
     return formatAmountToString(this.safePrice);
   }

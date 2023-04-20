@@ -41,7 +41,7 @@ export class AppController {
   @UseInterceptors(CacheInterceptor)
   @Get('/safe/apr')
   getSafeApr(): string {
-    return '37.3';
+    return '17.3';
   }
 
   @UseInterceptors(CacheInterceptor)
