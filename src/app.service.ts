@@ -17,6 +17,11 @@ import {
 } from './utils/formatAmountFromResponseToString';
 import { EstimateSwapDto } from './estimate-swap.dto';
 import { Cron } from '@nestjs/schedule';
+import fetch from 'node-fetch';
+import {
+  KyberResponse,
+  SwapEstimateResponse,
+} from './interfaces/KyberResponse';
 
 @Injectable()
 export class AppService {
@@ -58,65 +63,121 @@ export class AppService {
     return 'healthy';
   }
 
-  async estimateSwap(estimateSwapDto: EstimateSwapDto) {
-    // const search = Object.keys(estimateSwapDto).reduce(
-    //   (searchString, key) =>
-    //     estimateSwapDto[key] !== undefined
-    //       ? `${searchString}&${key}=${estimateSwapDto[key]}`
-    //       : searchString,
-    //   '',
-    // );
-    // const res = await fetch(
-    //   `https://aggregator-api.kyberswap.com/arbitrum/route/encode?${search.slice(
-    //     1,
-    //   )}`,
-    //   {
-    //     headers: {
-    //       'accept-version': 'Latest',
-    //     },
-    //   },
-    // );
-    const operation =
-      estimateSwapDto.tokenIn === this.usdcContract.address &&
-      estimateSwapDto.tokenOut === this.safeTokenContract.address
-        ? 'buySafeForExactAmountOfUSD'
-        : estimateSwapDto.tokenIn === this.safeTokenContract.address &&
-          estimateSwapDto.tokenOut === this.usdcContract.address
-        ? 'sellExactAmountOfSafe'
-        : 'unsupported';
+  async estimateSwap(
+    estimateSwapDto: EstimateSwapDto,
+  ): Promise<SwapEstimateResponse> {
+    if (this.safePrice === undefined) {
+      throw new HttpException(
+        'Safe price is undefined. Please try again in a few minutes.',
+        500,
+      );
+    }
+    const usdcAddress = this.usdcContract.address;
+    const safeAddress = this.safeTokenContract.address;
 
-    let amountOut = 0;
+    const operation =
+      estimateSwapDto.tokenOut === safeAddress
+        ? estimateSwapDto.tokenIn === usdcAddress
+          ? 'buySafeForExactAmountOfUSD'
+          : 'preSwapWithKyberAndBuySafe'
+        : estimateSwapDto.tokenIn === safeAddress
+        ? estimateSwapDto.tokenOut === usdcAddress
+          ? 'sellExactAmountOfSafe'
+          : 'sellSafeAndPostSwapWithKyber'
+        : 'unsupported-only-to-or-from-safe-token';
+
     this.logger.debug(`${operation}`);
+
+    let jsonResponse: SwapEstimateResponse = {} as SwapEstimateResponse;
+    jsonResponse.inputAmount = estimateSwapDto.amountIn.toString();
+    jsonResponse.operation = operation;
+
+    const getKyberResponse = async (
+      estimateSwapDtoToPassToKyber: EstimateSwapDto,
+    ): Promise<KyberResponse> => {
+      const search = Object.keys(estimateSwapDtoToPassToKyber).reduce(
+        (searchString, key) =>
+          estimateSwapDtoToPassToKyber[key] !== undefined
+            ? `${searchString}&${key}=${estimateSwapDtoToPassToKyber[key]}`
+            : searchString,
+        '',
+      );
+      const queryString = `https://aggregator-api.kyberswap.com/arbitrum/route/encode?${search.slice(
+        1,
+      )}`;
+      const res = await fetch(queryString, {
+        method: 'GET',
+        redirect: 'follow',
+        headers: {
+          'accept-version': 'Latest',
+        },
+      });
+      return res.json();
+    };
+
+    const getSafeAmountForBuySafeForExactAmountOfUSD = (
+      usdAmount: string,
+    ): number => {
+      const usdToSpend = formatAmountFromResponse(usdAmount);
+      const usdTaxBuy = usdToSpend * this.buyTax;
+      const usdToSwapForSafe = usdToSpend - usdTaxBuy;
+      return (usdToSwapForSafe * 1e6) / this.safePrice;
+    };
+
+    const getUSDAmountForSellExactAmountOfSafe = (
+      safeAmount: string,
+    ): number => {
+      const safeTokensToSell = formatAmountFromResponse(safeAmount);
+      const usdPriceOfTokensToSell = safeTokensToSell * this.safePrice;
+      const usdTaxSell = usdPriceOfTokensToSell * this.sellTax;
+      const usdToReturn = usdPriceOfTokensToSell - usdTaxSell;
+      return usdToReturn * 1e6;
+    };
+
     switch (operation) {
       case 'buySafeForExactAmountOfUSD':
-        const usdToSpend = formatAmountFromResponse(estimateSwapDto.amountIn);
-        const usdTaxBuy = usdToSpend * this.buyTax;
-        const usdToSwapForSafe = usdToSpend - usdTaxBuy;
-        const safeTokensToBuy = (usdToSwapForSafe * 1e6) / this.safePrice;
-        amountOut = safeTokensToBuy;
+        jsonResponse.outputAmount = Math.round(
+          getSafeAmountForBuySafeForExactAmountOfUSD(estimateSwapDto.amountIn),
+        ).toString();
         break;
       case 'sellExactAmountOfSafe':
-        const safeTokensToSell = formatAmountFromResponse(
+        jsonResponse.outputAmount = Math.round(
+          getUSDAmountForSellExactAmountOfSafe(estimateSwapDto.amountIn),
+        ).toString();
+        break;
+      case 'preSwapWithKyberAndBuySafe':
+        const kyberResponse = await getKyberResponse({
+          ...estimateSwapDto,
+          to: process.env.SAFE_ROUTER_ADDRESS,
+          tokenOut: usdcAddress,
+        });
+        const outputAmount = Math.round(
+          getSafeAmountForBuySafeForExactAmountOfUSD(
+            kyberResponse.outputAmount,
+          ),
+        ).toString();
+        jsonResponse = {
+          ...kyberResponse,
+          outputAmount,
+          ...jsonResponse,
+        };
+        break;
+      case 'sellSafeAndPostSwapWithKyber':
+        const usdToGet = getUSDAmountForSellExactAmountOfSafe(
           estimateSwapDto.amountIn,
         );
-        const usdPriceOfTokensToSell = safeTokensToSell * this.safePrice;
-        const usdTaxSell = usdPriceOfTokensToSell * this.sellTax;
-        const usdToReturn = usdPriceOfTokensToSell - usdTaxSell;
-        amountOut = usdToReturn * 1e6;
+        jsonResponse = await getKyberResponse({
+          ...estimateSwapDto,
+          to: process.env.SAFE_ROUTER_ADDRESS,
+          tokenIn: usdcAddress,
+          amountIn: usdToGet.toString(),
+        });
         break;
       default:
-        throw new HttpException('unsupported token', 400);
+        throw new HttpException('unsupported operation or token', 400);
     }
 
-    return {
-      amountInUsd: 0,
-      amountOutUsd: 0,
-      encodedSwapData: '',
-      gasUsd: 0,
-      inputAmount: estimateSwapDto.tokenIn.toString(),
-      outputAmount: Math.round(amountOut).toString(),
-      routerAddress: '',
-    };
+    return jsonResponse;
   }
 
   @Cron('*/5 * * * * *') // This cron expression runs every 5 seconds
@@ -125,12 +186,13 @@ export class AppService {
   }
 
   async getSafePrice() {
-    this.logger.debug('requesting price from the safe contract');
+    // this.logger.debug('requesting price from the safe contract');
     const price = formatAmountFromResponse(
       await this.safeTokenContract.price(),
     );
+    if (price && this.safePrice != price)
+      this.logger.debug(`price update: was ${this.safePrice}, now ${price}`);
     if (!isNaN(Number(price))) this.safePrice = price;
-    this.logger.debug(`price ${this.safePrice}`);
     return formatAmountToString(this.safePrice);
   }
 

@@ -8,7 +8,10 @@ import {
 } from '@nestjs/common';
 import { AppService } from './app.service';
 import { EstimateSwapDto } from './estimate-swap.dto';
-import fetch, { Response } from 'node-fetch';
+import {
+  KyberResponse,
+  SwapEstimateResponse,
+} from './interfaces/KyberResponse';
 
 @Controller()
 export class AppController {
@@ -22,7 +25,7 @@ export class AppController {
   @Get('/swap/estimate')
   async estimateSwap(
     @Query() estimateSwapDto: EstimateSwapDto,
-  ): Promise<unknown> {
+  ): Promise<SwapEstimateResponse> {
     return this.appService.estimateSwap(estimateSwapDto);
   }
 
