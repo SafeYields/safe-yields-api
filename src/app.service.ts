@@ -7,6 +7,7 @@ import {
 import { StaticJsonRpcProvider } from '@ethersproject/providers';
 import { Contract } from '@ethersproject/contracts';
 import { ConfigService } from '@nestjs/config';
+import { AddressZero } from '@ethersproject/constants';
 import * as SAFE_TOKEN_ABI from './artifacts/contracts/SafeToken.sol/SafeToken.json';
 import * as SAFE_NFT_ABI from './artifacts/contracts/SafeNFT.sol/SafeNFT.json';
 import * as USDC_ABI from './artifacts/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json';
@@ -148,7 +149,7 @@ export class AppService {
       case 'preSwapWithKyberAndBuySafe':
         const kyberResponse = await getKyberResponse({
           ...estimateSwapDto,
-          to: process.env.SAFE_ROUTER_ADDRESS,
+          to: AddressZero,
           tokenOut: usdcAddress,
         });
         const outputAmount = Math.round(
@@ -168,7 +169,7 @@ export class AppService {
         );
         jsonResponse = await getKyberResponse({
           ...estimateSwapDto,
-          to: process.env.SAFE_ROUTER_ADDRESS,
+          to: process.env.SAFE_ROUTER_ADDRESS || AddressZero,
           tokenIn: usdcAddress,
           amountIn: usdToGet.toString(),
         });
@@ -180,7 +181,7 @@ export class AppService {
     return jsonResponse;
   }
 
-  @Cron('*/5 * * * * *') // This cron expression runs every 5 seconds
+  @Cron('*/1 * * * * *') // This cron expression runs every 5 seconds
   async handleCron() {
     await this.getSafePrice();
   }
@@ -190,8 +191,8 @@ export class AppService {
     const price = formatAmountFromResponse(
       await this.safeTokenContract.price(),
     );
-    if (price && this.safePrice != price)
-      this.logger.debug(`price update: was ${this.safePrice}, now ${price}`);
+    // if (price && this.safePrice != price)
+    //   this.logger.debug(`price update: was ${this.safePrice}, now ${price}`);
     if (!isNaN(Number(price))) this.safePrice = price;
     return formatAmountToString(this.safePrice);
   }
