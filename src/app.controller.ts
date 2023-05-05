@@ -54,27 +54,9 @@ export class AppController {
   }
 
   @UseInterceptors(CacheInterceptor)
-  @Get('/nft/presale-price')
-  getNftPresalePrice(): Promise<[string, string, string, string]> {
-    return this.appService.getNftPresalePrice();
-  }
-
-  @UseInterceptors(CacheInterceptor)
   @Get('/nft/available')
   getPresaleNFTAvailable(): Promise<[string, string, string, string]> {
-    return this.appService.getPresaleNFTAvailable();
-  }
-
-  @UseInterceptors(CacheInterceptor)
-  @Get('/nft/presale')
-  getPresaleLaunchDate(): Promise<number> {
-    return this.appService.getPresaleLaunchDate();
-  }
-
-  @UseInterceptors(CacheInterceptor)
-  @Get('/nft/week')
-  getCurrentPresaleWeek(): Promise<number> {
-    return this.appService.getCurrentPresaleWeek();
+    return this.appService.getNFTSupplyAvailable();
   }
 
   @UseInterceptors(CacheInterceptor)

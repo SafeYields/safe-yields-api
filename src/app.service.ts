@@ -211,16 +211,9 @@ export class AppService {
     );
   }
 
-  async getNftPresalePrice() {
+  async getNFTSupplyAvailable() {
     this.logger.debug('requesting the blockchain');
-    return (await this.safeNFTContract.getDiscountedPriceTable()).map((value) =>
-      formatAmountFromResponseToString(value, 6),
-    );
-  }
-
-  async getPresaleNFTAvailable() {
-    this.logger.debug('requesting the blockchain');
-    return (await this.safeNFTContract.getPresaleNFTAvailable()).map((value) =>
+    return (await this.safeNFTContract.getNFTSupplyAvailable()).map((value) =>
       formatAmountFromResponseToString(value, 0),
     );
   }
@@ -229,14 +222,6 @@ export class AppService {
     return (await this.safeNFTContract.getFairPriceTable()).map((value) =>
       formatAmountFromResponseToString(value, 6),
     );
-  }
-
-  async getPresaleLaunchDate() {
-    return (await this.safeNFTContract.presaleStartDate()).toNumber();
-  }
-
-  async getCurrentPresaleWeek() {
-    return (await this.safeNFTContract.getCurrentPresaleWeek()).toNumber();
   }
 
   async getNftBalance(address: string) {
