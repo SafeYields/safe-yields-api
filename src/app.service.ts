@@ -246,7 +246,7 @@ export class AppService {
     await this.getSafePrice();
   }
 
-  @Cron('*/1 * * * * *') // This cron expression runs every 5 seconds
+  @Cron('0 0 * * 1 ') // Weekly on Mondays, at midnight
   async distributeProfit() {
     try {
       const balance = await this.usdcContract.balanceOf(
