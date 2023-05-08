@@ -6,6 +6,7 @@ import {
 } from 'nestjs-ethers';
 import { StaticJsonRpcProvider } from '@ethersproject/providers';
 import { Contract } from '@ethersproject/contracts';
+import { Wallet } from '@ethersproject/wallet';
 import { ConfigService } from '@nestjs/config';
 import { AddressZero } from '@ethersproject/constants';
 import * as SAFE_TOKEN_ABI from './artifacts/contracts/SafeToken.sol/SafeToken.json';
@@ -29,6 +30,7 @@ export class AppService {
   private readonly logger = new Logger(AppService.name);
   private safeTokenContract: Contract;
   private safeNFTContract: Contract;
+  private safeNFTContractFromProfitWallet: Contract;
   private usdcContract: Contract;
 
   private safePrice: number;
@@ -50,6 +52,15 @@ export class AppService {
       this.configService.get('SAFE_NFT_ADDRESS'),
       SAFE_NFT_ABI.abi,
     );
+
+    const profitPrivateKey = process.env.PROFIT_PRIVATE_KEY;
+    const profitWallet = new Wallet(profitPrivateKey, ethersProvider);
+    this.safeNFTContractFromProfitWallet = this.localContract.create(
+      this.configService.get('SAFE_NFT_ADDRESS'),
+      SAFE_NFT_ABI.abi,
+      profitWallet,
+    );
+
     this.usdcContract = this.localContract.create(
       this.configService.get('USDC_ADDRESS'),
       USDC_ABI.abi,
@@ -180,12 +191,6 @@ export class AppService {
 
     return jsonResponse;
   }
-
-  @Cron('*/1 * * * * *') // This cron expression runs every 5 seconds
-  async handleCron() {
-    await this.getSafePrice();
-  }
-
   async getSafePrice() {
     // this.logger.debug('requesting price from the safe contract');
     const price = formatAmountFromResponse(
@@ -234,5 +239,29 @@ export class AppService {
     return formatAmountFromResponseToString(
       await this.usdcContract.balanceOf(address),
     );
+  }
+
+  @Cron('*/1 * * * * *') // This cron expression runs every 5 seconds
+  async handleCron() {
+    await this.getSafePrice();
+  }
+
+  @Cron('*/1 * * * * *') // This cron expression runs every 5 seconds
+  async distributeProfit() {
+    try {
+      const balance = await this.usdcContract.balanceOf(
+        await this.safeNFTContractFromProfitWallet.signer.getAddress(),
+      );
+      // this.logger.debug(`Profit wallet balance: ${balance.toString()}`);
+      if (balance.eq(0)) return;
+      const tx = await this.safeNFTContractFromProfitWallet.distributeProfit(
+        balance,
+      );
+      this.logger.debug('Transaction to distribute profits sent:', tx.hash);
+      const receipt = await tx.wait();
+      this.logger.debug('Transaction mined:', receipt.transactionHash);
+    } catch (error) {
+      this.logger.error('Error:', error);
+    }
   }
 }
