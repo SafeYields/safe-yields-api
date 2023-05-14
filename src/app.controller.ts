@@ -62,7 +62,7 @@ export class AppController {
   @UseInterceptors(CacheInterceptor)
   @Get('/nft/apr')
   getNftApr(): string {
-    return '30.38';
+    return '16';
   }
 
   @UseInterceptors(CacheInterceptor)
