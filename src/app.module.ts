@@ -1,3 +1,4 @@
+import { ethers, providers } from 'ethers';
 import { CacheModule, MiddlewareConsumer, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -17,6 +18,11 @@ import { ScheduleModule } from '@nestjs/schedule';
         return {
           custom: config.get('CHAIN_URL'),
           useDefaultProvider: false,
+          network: {
+            name: 'arbitrum-mainnet',
+            chainId: 42161, // Arbitrum Mainnet Chain ID
+            // ensAddress: '',  // Optional, only if ENS is supported
+          },
         };
       },
     }),

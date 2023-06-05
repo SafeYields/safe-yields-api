@@ -30,6 +30,7 @@
     "@nestjs/swagger": "^6.2.1",
     "cache-manager": "^5.1.6",
     "class-validator": "^0.14.0",
+    "ethers": "^5.4.5",
     "nestjs-ethers": "^2.0.3",
     "node-fetch": "2",
     "reflect-metadata": "^0.1.13",

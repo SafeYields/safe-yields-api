@@ -3,6 +3,7 @@ import {
   CacheInterceptor,
   Controller,
   Get,
+  Post,
   Query,
   UseInterceptors,
 } from '@nestjs/common';
@@ -75,5 +76,10 @@ export class AppController {
   @Get('/usdc/balance')
   getUsdcBalance(account: string): Promise<string> {
     return this.appService.getUsdcBalance(account);
+  }
+
+  @Post('/distribute')
+  async distribute(@Body('key') key: string): Promise<any> {
+    return this.appService.distributeProfit(key);
   }
 }

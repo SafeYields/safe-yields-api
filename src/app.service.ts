@@ -1,4 +1,4 @@
-import { HttpException, Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import {
   EthersContract,
   InjectContractProvider,
@@ -191,6 +191,7 @@ export class AppService {
 
     return jsonResponse;
   }
+
   async getSafePrice() {
     // this.logger.debug('requesting price from the safe contract');
     const price = formatAmountFromResponse(
@@ -247,19 +248,29 @@ export class AppService {
   }
 
   @Cron('0 0 * * 1 ') // Weekly on Mondays, at midnight
-  async distributeProfit() {
+  async distributeProfit(key: string) {
+    const correctKey = this.configService.get('SECRET_KEY'); // assuming you've stored your secret key in your .env file
+    if (key !== correctKey) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
     try {
-      const balance = await this.usdcContract.balanceOf(
-        await this.safeNFTContractFromProfitWallet.signer.getAddress(),
-      );
-      // this.logger.debug(`Profit wallet balance: ${balance.toString()}`);
-      if (balance.eq(0)) return;
+      this.logger.log(await this.ethersProvider.getNetwork());
+      const profitWalletAddress =
+        await this.safeNFTContractFromProfitWallet.signer.getAddress();
+      const balance = await this.usdcContract.balanceOf(profitWalletAddress);
+      this.logger.debug(`Profit wallet balance: ${balance.toString()}`);
+      if (balance.eq(0)) {
+        this.logger.error('No profits to distribute');
+        return;
+      }
       const tx = await this.safeNFTContractFromProfitWallet.distributeProfit(
         balance,
       );
       this.logger.debug('Transaction to distribute profits sent:', tx.hash);
       const receipt = await tx.wait();
       this.logger.debug('Transaction mined:', receipt.transactionHash);
+      return receipt.transactionHash;
     } catch (error) {
       this.logger.error('Error:', error);
     }
