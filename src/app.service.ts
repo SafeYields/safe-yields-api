@@ -253,26 +253,23 @@ export class AppService {
     if (key !== correctKey) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
-
-    try {
-      this.logger.log(await this.ethersProvider.getNetwork());
-      const profitWalletAddress =
-        await this.safeNFTContractFromProfitWallet.signer.getAddress();
-      const balance = await this.usdcContract.balanceOf(profitWalletAddress);
-      this.logger.debug(`Profit wallet balance: ${balance.toString()}`);
-      if (balance.eq(0)) {
-        this.logger.error('No profits to distribute');
-        return;
-      }
-      const tx = await this.safeNFTContractFromProfitWallet.distributeProfit(
-        balance,
+    const profitWalletAddress =
+      await this.safeNFTContractFromProfitWallet.signer.getAddress();
+    const balance = await this.usdcContract.balanceOf(profitWalletAddress);
+    this.logger.debug(`Profit wallet balance: ${balance.toString()}`);
+    if (balance.eq(0)) {
+      this.logger.error('No profits to distribute');
+      throw new HttpException(
+        'No profits to distribute',
+        HttpStatus.PAYMENT_REQUIRED,
       );
-      this.logger.debug('Transaction to distribute profits sent:', tx.hash);
-      const receipt = await tx.wait();
-      this.logger.debug('Transaction mined:', receipt.transactionHash);
-      return receipt.transactionHash;
-    } catch (error) {
-      this.logger.error('Error:', error);
     }
+    const tx = await this.safeNFTContractFromProfitWallet.distributeProfit(
+      balance,
+    );
+    this.logger.debug('Transaction to distribute profits sent:', tx.hash);
+    const receipt = await tx.wait();
+    this.logger.debug('Transaction mined:', receipt.transactionHash);
+    return receipt.transactionHash;
   }
 }
