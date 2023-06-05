@@ -19,9 +19,8 @@ import { ScheduleModule } from '@nestjs/schedule';
           custom: config.get('CHAIN_URL'),
           useDefaultProvider: false,
           network: {
-            name: 'arbitrum-mainnet',
-            chainId: 42161, // Arbitrum Mainnet Chain ID
-            // ensAddress: '',  // Optional, only if ENS is supported
+            name: config.get('CHAIN_NAME'),
+            chainId: Number(config.get('CHAIN_ID')),
           },
         };
       },
