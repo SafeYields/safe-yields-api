@@ -80,6 +80,6 @@ export class AppController {
 
   @Post('/distribute')
   async distribute(@Body('key') key: string): Promise<any> {
-    return this.appService.distributeProfit(key);
+    return this.appService.distributeProfitEndPoint(key);
   }
 }

@@ -248,11 +248,7 @@ export class AppService {
   }
 
   @Cron('0 0 * * 1 ') // Weekly on Mondays, at midnight
-  async distributeProfit(key: string) {
-    const correctKey = this.configService.get('SECRET_KEY'); // assuming you've stored your secret key in your .env file
-    if (key !== correctKey) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    }
+  async distributeProfit() {
     const profitWalletAddress =
       await this.safeNFTContractFromProfitWallet.signer.getAddress();
     const balance = await this.usdcContract.balanceOf(profitWalletAddress);
@@ -271,5 +267,13 @@ export class AppService {
     const receipt = await tx.wait();
     this.logger.debug('Transaction mined:', receipt.transactionHash);
     return receipt.transactionHash;
+  }
+
+  async distributeProfitEndPoint(key: string) {
+    const correctKey = this.configService.get('SECRET_KEY'); // assuming you've stored your secret key in your .env file
+    if (key !== correctKey) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+    return this.distributeProfit();
   }
 }
