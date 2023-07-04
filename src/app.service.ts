@@ -242,7 +242,7 @@ export class AppService {
     );
   }
 
-  @Cron('*/1 * * * * *') // This cron expression runs every 5 seconds
+  @Cron('*/1 * * * * *') // This cron expression runs every 1 second
   async handleCron() {
     await this.getSafePrice();
   }
